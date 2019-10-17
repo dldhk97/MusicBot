@@ -2588,7 +2588,7 @@ class MusicBot(discord.Client):
         return Response('Left the guild: `{0.name}` (Owner: `{0.owner.name}`, ID: `{0.id}`)'.format(t))
 
     # myplaylists method
-    async def cmd_playlists(self, channel, player):
+    async def cmd_playlists(self, player):
         """
         Usage:
             {command_prefix}playlists
@@ -2605,12 +2605,44 @@ class MusicBot(discord.Client):
             file_paths = os.listdir(playlists_path)
             for file in file_paths:
                 if file.endswith('.txt'):
-                    playlists += str(cnt) + '. ' + file.replace('_','\_') + '\n'
+                    playlists += str(cnt) + '. ' + file.replace('_','\_').replace('.txt','') + '\n'
                     cnt += 1
             if not playlists:
                 msg = 'No playlists found.\nPlease add playlist file at ' + playlists_path + '.'
             else:
                 msg = playlists
+        else:
+            msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
+
+        return Response(msg, delete_after=30)
+
+    # myplist
+    async def cmd_plist(self, channel, player, name):
+        """
+        Usage:
+            {command_prefix}plist [name]
+
+        add playlist's music
+        """
+        playlists = ''
+        msg = ''
+        found = False
+
+        playlists_path = 'config/playlists'
+        if os.path.exists(playlists_path):
+            log.debug('Reading playlists from ' + playlists_path)
+            file_paths = os.listdir(playlists_path)
+            for file in file_paths:
+                if file.endswith('.txt'):
+                    if file.replace('.txt', '') == name:
+                        #add playlist
+                        #await self.safe_send_message(channel, 'Adding ' + name + '...')
+                        found = True
+                        break
+            if not found:
+                msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
+            else:
+                msg = 'Playlist added'
         else:
             msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
 
