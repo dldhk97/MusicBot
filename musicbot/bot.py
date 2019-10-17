@@ -2559,7 +2559,7 @@ class MusicBot(discord.Client):
         
         Disconnects from voice channels and closes the bot process.
         """
-        await self.safe_send_message(channel, "\N{WAVING HAND SIGN}")
+        await self.safe_send_message(channel, "\N{WAVING HAND SIGN} Goodbye World!")
         
         player = self.get_player_in(channel.guild)
         if player and player.is_paused:
@@ -2586,6 +2586,35 @@ class MusicBot(discord.Client):
                 raise exceptions.CommandError('No guild was found with the ID or name as `{0}`'.format(val))
         await t.leave()
         return Response('Left the guild: `{0.name}` (Owner: `{0.owner.name}`, ID: `{0.id}`)'.format(t))
+
+    # myplaylists method
+    async def cmd_playlists(self, channel, player):
+        """
+        Usage:
+            {command_prefix}playlists
+
+        Prints the available playlists
+        """
+        playlists = ''
+        msg = ''
+        cnt = 1
+
+        playlists_path = 'config/playlists'
+        if os.path.exists(playlists_path):
+            log.debug('Reading playlists from ' + playlists_path)
+            file_paths = os.listdir(playlists_path)
+            for file in file_paths:
+                if file.endswith('.txt'):
+                    playlists += str(cnt) + '. ' + file.replace('_','\_') + '\n'
+                    cnt += 1
+            if not playlists:
+                msg = 'No playlists found.\nPlease add playlist file at ' + playlists_path + '.'
+            else:
+                msg = playlists
+        else:
+            msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
+
+        return Response(msg, delete_after=30)
 
     @dev_only
     async def cmd_breakpoint(self, message):
@@ -2647,6 +2676,7 @@ class MusicBot(discord.Client):
 
         return Response(codeblock.format(result))
 
+    #메시지 받았을 때
     async def on_message(self, message):
         await self.wait_until_ready()
 
@@ -2675,6 +2705,7 @@ class MusicBot(discord.Client):
             args = []
 
         handler = getattr(self, 'cmd_' + command, None)
+        
         if not handler:
             # alias handler
             if self.config.usealias:
