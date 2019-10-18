@@ -2641,9 +2641,10 @@ class MusicBot(discord.Client):
     async def cmd_plist(self, message, player, channel, author, permissions, leftover_args, song_url):
         """
         Usage:
-            {command_prefix}plist [song_url]
+            {command_prefix}plist [playlist]
 
-        add playlist's music
+        Add playlist's music at music queue.
+        Warning! This function is too unstable.
         """
         playlists = ''
         msg = ''
@@ -2670,6 +2671,46 @@ class MusicBot(discord.Client):
                             await self.cmd_play(message, player, channel, author, permissions, leftover_args, line)
                         line = f.readline()
                     msg = str(cnt) + ' songs added'
+                else:
+                    msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
+            else:
+                msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
+        else:
+            msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
+
+        return Response(msg, delete_after=30)
+
+    # changeautoplay
+    async def cmd_chautoplay(self, name, player, channel):
+        """
+        Usage:
+            {command_prefix}chautoplay [playlist]
+
+        Change autoplaylist to playlist.
+        Previous autoplaylist being copy to autoplaylist.txt.bak
+        """
+        playlists = ''
+        msg = ''
+        file_path = ''
+
+        playlists_path = 'config/playlists'
+        if os.path.exists(playlists_path):
+            log.debug('Reading playlists from ' + playlists_path)
+            file_paths = os.listdir(playlists_path)
+            for file in file_paths:
+                if file.endswith('.txt'):
+                    if file.replace('.txt', '') == name:
+                        file_path = str(file);
+                        break
+            if file_path:
+                file_path = playlists_path + '/' + file_path
+                if os.path.getsize(file_path) > 0:
+                    #backup previous autoplaylist
+                    shutil.copy(self.config.auto_playlist_file, self.config.auto_playlist_file + '.bak')
+                    shutil.copy(file_path, self.config.auto_playlist_file)
+                    self.autoplaylist = load_file(self.config.auto_playlist_file)
+                    player.autoplaylist = list(self.autoplaylist)
+                    msg = 'Autoplaylist changed to ' + file_path + ' permenently.'
                 else:
                     msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
             else:
