@@ -2637,7 +2637,7 @@ class MusicBot(discord.Client):
 
         return Response(msg, delete_after=30)
 
-    # myplist
+    @owner_only
     async def cmd_plist(self, message, player, channel, author, permissions, leftover_args, song_url):
         """
         Usage:
