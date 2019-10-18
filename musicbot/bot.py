@@ -1315,6 +1315,17 @@ class MusicBot(discord.Client):
         equivalent of the song. Streaming from Spotify is not possible.
         """
 
+        #print('\n\n\nAAAAAAAAAAAAAAAAA\n\n\n')
+        #print(self)
+        #print(message)
+        #print(player)
+        #print(channel)
+        #print(author)
+        #print(permissions)
+        #print(leftover_args)
+        #print('NANI!' + song_url + 'NANI!')
+        #print('\n\n\nBBBBBBBBBBBBBBBB\n\n\n')
+
         song_url = song_url.strip('<>')
 
         await self.send_typing(channel)
@@ -1382,6 +1393,16 @@ class MusicBot(discord.Client):
                 except exceptions.SpotifyError:
                     raise exceptions.CommandError(self.str.get('cmd-play-spotify-invalid', 'You either provided an invalid URI, or there was a problem.'))
 
+        #print('\n\n\nDDDDDDDDDDDDDDDDDDD\n\n\n')
+        #print(self)
+        #print(message)
+        #print(player)
+        #print(channel)
+        #print(author)
+        #print(permissions)
+        #print(leftover_args)
+        #print(song_url)
+        #print('\n\n\nFFFFFFFFFFFFFFFFFF\n\n\n')
         # This lock prevent spamming play command to add entries that exceeds time limit/ maximum song limit
         async with self.aiolocks[_func_() + ':' + str(author.id)]:
             if permissions.max_songs and player.playlist.count_for_user(author) >= permissions.max_songs:
@@ -2617,16 +2638,16 @@ class MusicBot(discord.Client):
         return Response(msg, delete_after=30)
 
     # myplist
-    async def cmd_plist(self, channel, player, name):
+    async def cmd_plist(self, message, player, channel, author, permissions, leftover_args, song_url):
         """
         Usage:
-            {command_prefix}plist [name]
+            {command_prefix}plist [song_url]
 
         add playlist's music
         """
         playlists = ''
         msg = ''
-        found = False
+        file_path = ''
 
         playlists_path = 'config/playlists'
         if os.path.exists(playlists_path):
@@ -2634,15 +2655,25 @@ class MusicBot(discord.Client):
             file_paths = os.listdir(playlists_path)
             for file in file_paths:
                 if file.endswith('.txt'):
-                    if file.replace('.txt', '') == name:
-                        #add playlist
-                        #await self.safe_send_message(channel, 'Adding ' + name + '...')
-                        found = True
+                    if file.replace('.txt', '') == song_url:
+                        file_path = str(file);
                         break
-            if not found:
-                msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
+            if file_path:
+                file_path = playlists_path + '/' + file_path
+                if os.path.getsize(file_path) > 0:
+                    f = open(file_path, encoding='UTF-8')
+                    line = f.readline()
+                    cnt = 0
+                    while line:
+                        if  line:
+                            cnt += 1
+                            await self.cmd_play(message, player, channel, author, permissions, leftover_args, line)
+                        line = f.readline()
+                    msg = str(cnt) + ' songs added'
+                else:
+                    msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
             else:
-                msg = 'Playlist added'
+                msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
         else:
             msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
 
