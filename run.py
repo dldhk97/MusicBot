@@ -127,7 +127,7 @@ log.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(stream=sys.stdout)
 sh.setFormatter(logging.Formatter(
-    fmt="[%(levelname)s] %(name)s: %(message)s"
+    fmt="[%(levelname)s] %(name)s: %(message)s", validate=False
 ))
 
 sh.setLevel(logging.INFO)
@@ -135,7 +135,7 @@ log.addHandler(sh)
 
 tfh = logging.StreamHandler(stream=tmpfile)
 tfh.setFormatter(logging.Formatter(
-    fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s"
+    fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s", validate=False
 ))
 tfh.setLevel(logging.DEBUG)
 log.addHandler(tfh)
@@ -166,7 +166,7 @@ def finalize_logging():
 
     fh = logging.FileHandler("logs/musicbot.log", mode='a')
     fh.setFormatter(logging.Formatter(
-        fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
+        fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s", validate=False
     ))
     fh.setLevel(logging.DEBUG)
     log.addHandler(fh)
@@ -176,7 +176,7 @@ def finalize_logging():
     dlog = logging.getLogger('discord')
     dlh = logging.StreamHandler(stream=sys.stdout)
     dlh.terminator = ''
-    dlh.setFormatter(logging.Formatter('.'))
+    dlh.setFormatter(logging.Formatter('.'), validate=False)
     dlog.addHandler(dlh)
 
 

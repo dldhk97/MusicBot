@@ -2614,7 +2614,8 @@ class MusicBot(discord.Client):
         Usage:
             {command_prefix}playlists
 
-        Prints the available playlists
+        Print available playlists.
+        You can change autoplaylist by {command_prefix}chautoplay <playlist>
         """
         playlists = ''
         msg = ''
@@ -2710,7 +2711,7 @@ class MusicBot(discord.Client):
                     shutil.copy(file_path, self.config.auto_playlist_file)
                     self.autoplaylist = load_file(self.config.auto_playlist_file)
                     player.autoplaylist = list(self.autoplaylist)
-                    msg = 'Autoplaylist changed to ' + file_path + ' permenently.'
+                    msg = 'Autoplaylist changed to ' + file_path + '.'
                 else:
                     msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
             else:

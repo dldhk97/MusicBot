@@ -1,9 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\config",
-    "\\musicbot"
+    ""
   ],
-  "SelectedNode": "\\musicbot\\bot.py",
+  "SelectedNode": "\\.gitignore",
   "PreviewInSolutionExplorer": false
 }
