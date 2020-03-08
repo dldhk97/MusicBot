@@ -35,7 +35,7 @@ from .config import Config, ConfigDefaults
 from .permissions import Permissions, PermissionsDefaults
 from .aliases import Aliases, AliasesDefault
 from .constructs import SkipState, Response
-from .utils import load_file, write_file, fixg, ftimedelta, _func_, _get_variable
+from .utils import load_file, write_file, fixg, ftimedelta, _func_, _get_variable, download_from_url
 from .spotify import Spotify
 from .json import Json
 
@@ -2627,7 +2627,7 @@ class MusicBot(discord.Client):
             file_paths = os.listdir(playlists_path)
             for file in file_paths:
                 if file.endswith('.txt'):
-                    playlists += str(cnt) + '. ' + file.replace('_','\_').replace('.txt','') + '\n'
+                    playlists += str(cnt) + '. ' + file.replace('_','\_')[:-4] + '\n'
                     cnt += 1
             if not playlists:
                 msg = 'No playlists found.\nPlease add playlist file at ' + playlists_path + '.'
@@ -2682,7 +2682,7 @@ class MusicBot(discord.Client):
         return Response(msg, delete_after=30)
 
     # changeautoplay
-    async def cmd_chautoplay(self, name, player, channel):
+    async def cmd_chautoplay(self, arg, player, channel):
         """
         Usage:
             {command_prefix}chautoplay [playlist]
@@ -2695,31 +2695,108 @@ class MusicBot(discord.Client):
         file_path = ''
 
         playlists_path = 'config/playlists'
-        if os.path.exists(playlists_path):
-            log.debug('Reading playlists from ' + playlists_path)
-            file_paths = os.listdir(playlists_path)
-            for file in file_paths:
-                if file.endswith('.txt'):
-                    if file.replace('.txt', '') == name:
-                        file_path = str(file);
-                        break
-            if file_path:
-                file_path = playlists_path + '/' + file_path
-                if os.path.getsize(file_path) > 0:
-                    #backup previous autoplaylist
-                    shutil.copy(self.config.auto_playlist_file, self.config.auto_playlist_file + '.bak')
-                    shutil.copy(file_path, self.config.auto_playlist_file)
-                    self.autoplaylist = load_file(self.config.auto_playlist_file)
-                    player.autoplaylist = list(self.autoplaylist)
-                    msg = 'Autoplaylist changed to ' + file_path + '.'
-                else:
-                    msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
+        if not os.path.exists(playlists_path):
+            return Response('No playlist directory found.\nPlease create ' + playlists_path + ' directory.', delete_after=30)
+
+        log.debug('Reading playlists from ' + playlists_path)
+        file_paths = os.listdir(playlists_path)
+        for file in file_paths:
+            if file.endswith('.txt'):
+                if file.replace('.txt', '') == arg:
+                    file_path = str(file);
+                    break
+
+        if file_path:
+            file_path = playlists_path + '/' + file_path
+            if os.path.getsize(file_path) > 0:
+                #backup previous autoplaylist
+                shutil.copy(self.config.auto_playlist_file, self.config.auto_playlist_file + '.bak')
+                shutil.copy(file_path, self.config.auto_playlist_file)
+                self.autoplaylist = load_file(self.config.auto_playlist_file)
+                player.autoplaylist = list(self.autoplaylist)
+                msg = 'Autoplaylist changed to ' + file_path + '.'
             else:
-                msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
+                msg = 'File is Empty.\nPlease check playlist file at ' + file_path + '.'
         else:
-            msg = 'No playlist directory found.\nPlease create ' + playlists_path + ' directory.'
+            msg = 'Not playlist found.\nPlease check playlist file at ' + playlists_path + '.'
 
         return Response(msg, delete_after=30)
+
+    # addplaylist
+    async def cmd_addplaylist(self, playlist_name, url, player, channel):
+        """
+        Usage:
+            {command_prefix}addplaylist [playlist_name] [url]
+
+        Download playlist from url and save it as playlist_name.
+        After save, add it to playlist folder
+        """
+
+        playlist_name = playlist_name.split('.')[0]
+
+        msg = ''
+        playlists_path = 'config/playlists/'
+        file_path = playlists_path + playlist_name + '.txt.bak'
+
+        if not os.path.exists(playlists_path):
+            return Response('No playlist directory found.\nPlease create ' + playlists_path + ' directory.', delete_after=30)
+
+        # Find same file name from playlist folder.
+        for file in os.listdir(playlists_path) :
+            if file.endswith('.txt'):
+                if file.replace('.txt', '') == playlist_name:
+                    Response('Same file name already exists! Please change file name and try again.', delete_after=30)
+
+        # Download from url.
+        try:
+            download_from_url(url, file_path)
+        except Exception as e:
+            return Response('File Download Failed!\n' + e, delete_after=30)
+
+        if file_path:
+            if os.path.getsize(file_path) > 0:
+                file_path = file_path[:-4]
+                shutil.move(file_path + '.bak', file_path)                                   # txt.bak -> txt
+                msg = 'Autoplaylist changed to ' + file_path + '.'
+            elif os.path.getsize(file_path) > 5368709:
+                msg = 'File size is too big! Playlist must be smaller than 5MB.'
+            else:
+                msg = 'File is Empty.\nPlease check playlist file.'
+        else:
+            msg = "Playlist didn't downloaded.\nPlease check playlist file."
+
+        return Response(msg, delete_after=30)
+
+    # removeplaylist
+    async def cmd_removeplaylist(self, playlist_name, player, channel):
+        """
+        Usage:
+            {command_prefix}removeplaylist [playlist_name]
+
+        Remove playlist from playlist folder.
+        """
+
+        msg = ''
+        playlists_path = 'config/playlists/'
+        file_path = playlists_path + playlist_name + '.txt'
+
+        if not os.path.exists(playlists_path):
+            return Response('No playlist directory found.\nPlease create ' + playlists_path + ' directory.', delete_after=30)
+
+        # Find same file name from playlist folder.
+        for file in os.listdir(playlists_path) :
+            if file.endswith('.txt'):
+                if file.replace('.txt', '') == playlist_name:
+                    if os.path.exists(file_path):
+                        try:
+                            os.remove(file_path)
+                            return Response('Playlist deleted!', delete_after=30)
+                        except Exception as e:
+                            return Response(e, delete_after=30)
+
+        return Response("No playlist found.", delete_after=30)
+                            
+
 
     @dev_only
     async def cmd_breakpoint(self, message):

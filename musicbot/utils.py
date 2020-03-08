@@ -2,6 +2,7 @@ import sys
 import logging
 import aiohttp
 import inspect
+import requests
 
 from hashlib import md5
 from .constants import DISCORD_MSG_CHAR_LIMIT
@@ -165,3 +166,9 @@ def _get_variable(name):
                 del frame
     finally:
         del stack
+
+
+def download_from_url(url, file_path):
+    with open(file_path, "wb") as file:
+        response = requests.get(url)               
+        file.write(response.content)

@@ -126,17 +126,17 @@ log = logging.getLogger('launcher')
 log.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(stream=sys.stdout)
-sh.setFormatter(logging.Formatter(
-    fmt="[%(levelname)s] %(name)s: %(message)s", validate=False
-))
+#sh.setFormatter(logging.Formatter(
+#    fmt="[%(levelname)s] %(name)s: %(message)s", validate=False
+#))
 
 sh.setLevel(logging.INFO)
 log.addHandler(sh)
 
 tfh = logging.StreamHandler(stream=tmpfile)
-tfh.setFormatter(logging.Formatter(
-    fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s", validate=False
-))
+#tfh.setFormatter(logging.Formatter(
+#    fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s", validate=False
+#))
 tfh.setLevel(logging.DEBUG)
 log.addHandler(tfh)
 
@@ -165,9 +165,14 @@ def finalize_logging():
     del tfh
 
     fh = logging.FileHandler("logs/musicbot.log", mode='a')
-    fh.setFormatter(logging.Formatter(
-        fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s", validate=False
-    ))
+    if sys.version_info >= (3, 8):
+        fh.setFormatter(logging.Formatter(
+            fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s", validate=False
+        ))
+    else:
+        fh.setFormatter(logging.Formatter(
+            fmt="[%(relativeCreated).9f] %(name)s-%(levelname)s: %(message)s"
+        ))
     fh.setLevel(logging.DEBUG)
     log.addHandler(fh)
 
@@ -176,7 +181,10 @@ def finalize_logging():
     dlog = logging.getLogger('discord')
     dlh = logging.StreamHandler(stream=sys.stdout)
     dlh.terminator = ''
-    dlh.setFormatter(logging.Formatter('.', validate=False))
+    if sys.version_info >= (3, 8):
+        dlh.setFormatter(logging.Formatter('.', validate=False))
+    else:
+        dlh.setFormatter(logging.Formatter('.'))
     dlog.addHandler(dlh)
 
 
@@ -192,6 +200,9 @@ def sanity_checks(optional=True):
 
     # Make sure we're on Python 3.5+
     req_ensure_py3()
+
+    # Check Python 3.8
+    req_check_py38()
 
     # Fix windows encoding fuckery
     req_ensure_encoding()
@@ -261,6 +272,22 @@ def req_ensure_py3():
 
         log.critical("Could not find Python 3.5 or higher.  Please run the bot using Python 3.5")
         bugger_off()
+
+def req_check_py38():
+    if sys.version_info >= (3, 8):
+        sh.setFormatter(logging.Formatter(
+            fmt="[%(levelname)s] %(name)s: %(message)s", validate=False
+        ))
+        tfh.setFormatter(logging.Formatter(
+            fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s", validate=False
+        ))
+    else:
+        sh.setFormatter(logging.Formatter(
+            fmt="[%(levelname)s] %(name)s: %(message)s"
+        ))
+        tfh.setFormatter(logging.Formatter(
+            fmt="[%(relativeCreated).9f] %(asctime)s - %(levelname)s - %(name)s: %(message)s"
+        ))
 
 
 def req_check_deps():
