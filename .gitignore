@@ -19,3 +19,5 @@ config/blacklist.txt
 config/playlist/
 /config/playlists
 .vs/
+.venv/
+*.code-workspace
